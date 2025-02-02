@@ -52,7 +52,7 @@ export class SpotifyDto implements IMusicRepository{
             throw e
         }
     }
-    async getPlaylistTrack(accessToken: string, playlistId: string): Promise<any> {
+    async getPlaylistTrack(accessToken: string, playlistId: string): Promise<Track[]> {
         try{
             if(!accessToken) throw new Error('Access Token is required')
             if(!playlistId) throw new Error('Playlist Id is required')

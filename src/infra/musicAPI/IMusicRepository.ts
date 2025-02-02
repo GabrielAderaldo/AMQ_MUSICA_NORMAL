@@ -4,7 +4,7 @@ import { Track } from "../../domain/entity/track";
 
 export interface IMusicRepository {
     getAllPlaylists(accessToken: string): Promise<Playlist[]>
-    getPlaylistTrack(accessToken: string, playlistId: string): Promise<any>
+    getPlaylistTrack(accessToken: string, playlistId: string): Promise<Track[]>
     getSongsPreviewByName(trackName: string, trackArtist: string): Promise<Songs[]>
     getSongPreviewById(accessToken: string, trackId: string): Promise<any>
 }

@@ -39,8 +39,8 @@ export class MusicController{
                 track.artist.toLowerCase().includes(trackArtist.toLowerCase())
             )
 
-            
             if(betterTracks.length === 0) throw new Error('Track not found')
+            
             return betterTracks.shift()
             
         }catch(err){
@@ -48,5 +48,6 @@ export class MusicController{
         }
     }
 
+    
 
 }

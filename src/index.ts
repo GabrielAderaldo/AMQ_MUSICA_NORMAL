@@ -1,91 +1,118 @@
 import express from 'express';
-import { SpotifyService } from './infra/musicAPI/spotify/spotifyService';
-import { SpotifyDto } from './infra/musicAPI/spotify/spotifyDto';
-import { MusicRepository } from './infra/musicAPI/musicRepository';
-import { DeezerDto } from './infra/musicAPI/deezer/deezerDto';
-import { MusicController } from './useCase/controllers/musicController';
+import { connectionDatabase } from './infra/database/importantDatabase';
+import { DatabaseClientSingleton } from './infra/database/databaseClientSingleton';
+const cors = require('cors')
+import 'dotenv/config';
 
-const app: express.Application = express();
 const PORT = process.env.PORT || 3000;
 
-const cors = require('cors');
-require('dotenv').config();
+(async () => {
+  try {
+    // Conecta com o banco de dados antes de configurar o servidor
+    const client = await connectionDatabase();
+    DatabaseClientSingleton.setInstance(client);
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+    // Inicializa o Express apenas depois da conexão
+    const app: express.Application = express();
+    app.use(cors());
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
 
-app.get('/callback', (req, res) => {
-  const { code } = req.query;
-  const spotifyService = new SpotifyService();
-  spotifyService.getAccessToken(code as string)
-    .then((token) => {
-      res.send(token);
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).send(error);
-    });
-})
-
-app.get('/refresh', (req, res) => {
-  const { refreshToken } = req.query;
-  const spotifyService = new SpotifyService();
-  spotifyService.getRefreshToken(refreshToken as string)
-    .then((token) => {
-      res.send(token);
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).send(error);
-    });
-})
-
-app.get('/playlist', (req, res) => {
-  const { accessToken } = req.query;
-  const musicInfomationRepository = new MusicRepository(new SpotifyDto(),new DeezerDto());
-  musicInfomationRepository.getAllPlaylists(accessToken as string)
-    .then((playlists) => {
-      res.send(playlists);
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).send(error);
-    });
-  
-})
+    // Importa dinamicamente os módulos que dependem do banco ou das rotas
+    const { SpotifyService } = await import('./infra/musicAPI/spotify/spotifyService');
+    const { SpotifyDto } = await import('./infra/musicAPI/spotify/spotifyDto');
+    const { MusicRepository } = await import('./infra/musicAPI/musicRepository');
+    const { DeezerDto } = await import('./infra/musicAPI/deezer/deezerDto');
+    const { MusicController } = await import('./useCase/controllers/musicController');
+    const { GameController } = await import('./useCase/controllers/gameController');
 
 
-app.get('/playlist/:id', (req, res) => {
-  const { accessToken } = req.query;
-  const { id } = req.params;
-  const musicInfomationRepository = new MusicRepository(new SpotifyDto(),new DeezerDto());
-  musicInfomationRepository.getPlaylistTrack(accessToken as string, id)
-    .then((tracks) => {
-      res.send(tracks);
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).send(error);
-    });
-})
-
-app.get('/track/:name/:artist', (req, res) => {
-  const { name,artist } = req.params;
-  const musicController = new MusicController();
-  musicController.getSongsPreviewByName(name, artist)
-    .then((tracks) => {
-      res.send(tracks);
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500)
+    // Defina suas rotas após a conexão
+    app.get('/callback', (req, res) => {
+      const { code } = req.query;
+      const spotifyService = new SpotifyService();
+      spotifyService.getAccessToken(code as string)
+        .then((token) => {
+          res.send(token);
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(500).send(error);
+        });
     });
 
-})
+    app.get('/refresh', (req, res) => {
+      const { refreshToken } = req.query;
+      const spotifyService = new SpotifyService();
+      spotifyService.getRefreshToken(refreshToken as string)
+        .then((token) => {
+          res.send(token);
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(500).send(error);
+        });
+    });
 
+    app.get('/playlist', (req, res) => {
+      const { accessToken } = req.query;
+      const musicRepository = new MusicRepository(new SpotifyDto(), new DeezerDto());
+      musicRepository.getAllPlaylists(accessToken as string)
+        .then((playlists) => {
+          res.send(playlists);
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(500).send(error);
+        });
+    });
 
+    app.get('/playlist/:id', (req, res) => {
+      const { accessToken } = req.query;
+      const { id } = req.params;
+      const musicRepository = new MusicRepository(new SpotifyDto(), new DeezerDto());
+      musicRepository.getPlaylistTrack(accessToken as string, id)
+        .then((tracks) => {
+          res.send(tracks);
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(500).send(error);
+        });
+    });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on LINK: http://${process.env.DOMAIN}:${PORT}`);
-});
+    app.get('/track/:name/:artist', (req, res) => {
+      const { name, artist } = req.params;
+      const musicController = new MusicController();
+      musicController.getSongsPreviewByName(name, artist)
+        .then((tracks) => {
+          res.send(tracks);
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(500).send(error);
+        });
+    });
+
+    app.post('/createRoom', (req, res) => {
+      const { playlists_id, owner_id, players, round, max_round, accessToken } = req.body;
+      const gameController = new GameController();
+      gameController.createRoom(playlists_id, owner_id, players, round, max_round, accessToken)
+        .then((room) => {
+          res.send(room);
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(500).send(error);
+        });
+    });
+
+    // Inicia o servidor somente depois que tudo estiver configurado
+    app.listen(PORT, () => {
+      console.log(`Server is running on LINK: http://${process.env.DOMAIN}:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Erro ao iniciar a aplicação:', error);
+    process.exit(1);
+  }
+})();
