@@ -98,8 +98,19 @@ const PORT = process.env.PORT || 3000;
       const { playlists_id, owner_id, players, round, max_round, accessToken } = req.body;
       const gameController = new GameController();
       gameController.createRoom(playlists_id, owner_id, players, round, max_round, accessToken)
-        .then((room) => {
-          res.send(room);
+        .then((roomInfo) => {
+          const room = roomInfo.room_info;
+          const songs = roomInfo.songs;
+          const result = {
+            playlists_id: room.playlists_id,
+            status: room.status,
+            owner_id: room.owner_id,
+            players: room.players,
+            round: room.round,
+            max_round: room.max_round,
+            songs,
+          }
+          res.status(201).send(result);
         })
         .catch((error) => {
           console.log(error);

@@ -3,6 +3,11 @@ import { Room } from "../../../../domain/entity/room";
 import { DatabaseClientSingleton } from "../../databaseClientSingleton";
 
 const roomSchema = new mongoose.Schema<Room>({
+    private_id: {
+        type: String,
+        required: true,
+        unique: true
+    },
     playlists_id: {
         type: [String],
         required: true
@@ -19,14 +24,6 @@ const roomSchema = new mongoose.Schema<Room>({
     players: [{
         user_id: String,
         score: Number,
-    }],
-    music_pool: [{
-        id: String,
-        name: String,
-        artist: String,
-        preview: String,
-        album: String,
-        image: String
     }],
     round: {
         type: Number,

@@ -17,6 +17,7 @@ export class MusicRepository implements IMusicRepository{
         try{
             if(!trackName) throw new Error('Access Token is required')
             if(!trackArtist) throw new Error('Track Id is required')
+
             const songs = await this.musicReproduction.getSongsPreviewByName(trackName, trackArtist)
             return songs
         }catch(err){

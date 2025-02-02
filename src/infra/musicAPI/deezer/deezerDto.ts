@@ -1,6 +1,6 @@
 import { Playlist } from "../../../domain/entity/playlist";
 import { Songs } from "../../../domain/entity/songs";
-import { Track } from "../../../domain/entity/track";
+import { cleanSongName } from "../../../utils/cleanSongName";
 import { IMusicRepository } from "../IMusicRepository";
 import { DeezerService } from "./deezerService";
 
@@ -12,13 +12,13 @@ export class DeezerDto implements IMusicRepository{
         try{
             if(!trackName) throw new Error('Access Token is required')
             if(!trackArtist) throw new Error('Track Id is required')
-            const data = await this.deezerService.getSongPreviewByName(trackName)
+            const safeTrackName = cleanSongName(trackName)
+            const data = await this.deezerService.getSongPreviewByName(safeTrackName)
             const tracks = data.data
             const limitedTracks = tracks.slice(0,100)
             const tracksCorrectFormat:Songs[] = limitedTracks.map((track:any) => {
-                return new Songs(track.id,track.title,track.artist.name,track.album.title,"",track.duration,track.preview)    
+                return new Songs(track.id,track.title,track.artist.name,track.album.title,"",track.duration,track.preview,"")    
             })
-
             return tracksCorrectFormat
         }catch(err){
             throw err
