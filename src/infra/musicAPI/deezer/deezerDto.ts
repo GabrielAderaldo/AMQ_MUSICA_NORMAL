@@ -12,8 +12,8 @@ export class DeezerDto implements IMusicRepository{
         try{
             if(!trackName) throw new Error('Access Token is required')
             if(!trackArtist) throw new Error('Track Id is required')
-            const safeTrackName = cleanSongName(trackName)
-            const data = await this.deezerService.getSongPreviewByName(safeTrackName)
+           
+            const data = await this.deezerService.getSongPreviewByName(trackName)
             const tracks = data.data
             const limitedTracks = tracks.slice(0,100)
             const tracksCorrectFormat:Songs[] = limitedTracks.map((track:any) => {

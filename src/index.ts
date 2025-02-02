@@ -1,17 +1,21 @@
 import express from 'express';
-import { connectionDatabase } from './infra/database/importantDatabase';
+import { mongoConnection } from './infra/database/mongodb/mongoConnection';
 import { DatabaseClientSingleton } from './infra/database/databaseClientSingleton';
 const cors = require('cors')
 import 'dotenv/config';
+import { redisConnection } from './infra/cacheDatabase/redis/redisConnection';
+import { DatabaseCacheClientSingleton } from './infra/cacheDatabase/databaseCacheClientSingleton';
+import { RedisClientType } from 'redis';
 
 const PORT = process.env.PORT || 3000;
 
 (async () => {
   try {
     // Conecta com o banco de dados antes de configurar o servidor
-    const client = await connectionDatabase();
+    const client = await mongoConnection();
     DatabaseClientSingleton.setInstance(client);
-
+    const cachedClient = await redisConnection();
+    DatabaseCacheClientSingleton.setInstance(cachedClient);
     // Inicializa o Express apenas depois da conexão
     const app: express.Application = express();
     app.use(cors());

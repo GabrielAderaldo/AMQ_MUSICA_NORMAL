@@ -1,6 +1,7 @@
 import { Playlist } from "../../domain/entity/playlist";
 import { Songs } from "../../domain/entity/songs";
 import { Track } from "../../domain/entity/track";
+import { cleanSongName } from "../../utils/cleanSongName";
 import { IMusicRepository } from "./IMusicRepository";
 
 export class MusicRepository implements IMusicRepository{
@@ -17,8 +18,8 @@ export class MusicRepository implements IMusicRepository{
         try{
             if(!trackName) throw new Error('Access Token is required')
             if(!trackArtist) throw new Error('Track Id is required')
-
-            const songs = await this.musicReproduction.getSongsPreviewByName(trackName, trackArtist)
+            const safaTrack = cleanSongName(trackName)
+            const songs = await this.musicReproduction.getSongsPreviewByName(safaTrack, trackArtist)
             return songs
         }catch(err){
             throw err
