@@ -1,5 +1,4 @@
-import axios from "axios";
-import qs from 'qs';
+import { HttpHandlerBuilder, TYPE_OF_REQUEST } from "../../../utils/http/httpHandler";
 require('dotenv').config();
 
 export class SpotifyService {
@@ -8,20 +7,17 @@ export class SpotifyService {
         try{
             if(!code) throw new Error('Code is required')
 
-                const body = qs.stringify({
-                    grant_type: 'authorization_code',
-                    code: code,
-                    redirect_uri: `http://${process.env.DOMAIN}:${process.env.PORT}/callback`,
-                })
+            const body = new Map([['grant_type', 'authorization_code'],['code', code],['redirect_uri', `http://${process.env.DOMAIN}:${process.env.PORT}/callback`]])
+            const header = new Map([['Content-Type', 'application/x-www-form-urlencoded'],['Authorization', 'Basic ' + Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`).toString('base64')]])
+            const objectUrl = new HttpHandlerBuilder()
+                .setTypeOfRequest(TYPE_OF_REQUEST.POST)
+                .setBaseUrl('https://accounts.spotify.com')
+                .setPath(['api', 'token'])
+                .setBody(body)
+                .setHeader(header)
+                .build()
 
-                const header = {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Authorization': 'Basic ' + Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`).toString('base64'),
-                }
-                
-                const response = await axios.post('https://accounts.spotify.com/api/token', body, { headers: header });
-
-                return response.data;
+            return await objectUrl.axiosBuilder();
 
         }catch(e){
             throw e
@@ -32,17 +28,17 @@ export class SpotifyService {
         try{
             if(!refreshToken) throw new Error('Refresh Token is required')
             
-            const body = qs.stringify({
-                grant_type: 'refresh_token',
-                refresh_token: refreshToken,
-            })
-
-            const header =  {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': 'Basic ' + Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`).toString('base64')
-            }
-
-            const response = await axios.post('https://accounts.spotify.com/api/token', body, { headers: header });
+            const body = new Map([['grant_type', 'refresh_token'],['refresh_token', refreshToken]])
+            const header = new Map([['Content-Type', 'application/x-www-form-urlencoded'],['Authorization', 'Basic ' + Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`).toString('base64')]])
+            const objectUrl = new HttpHandlerBuilder()
+                .setTypeOfRequest(TYPE_OF_REQUEST.POST)
+                .setBaseUrl('https://accounts.spotify.com')
+                .setPath(['api', 'token'])
+                .setQuery(body)
+                .setHeader(header)
+                .build()
+            
+            const response = await objectUrl.axiosBuilder();
 
             return response.data;
 
@@ -54,9 +50,14 @@ export class SpotifyService {
     async getPlaylist(accessToken:string){
         try{
             if(!accessToken) throw new Error('Access Token is required')
-            const header = { Authorization: `Bearer ${accessToken}` }
-
-            const response = await axios.get('https://api.spotify.com/v1/me/playlists', { headers: header });
+            const header = new Map([['Authorization', `Bearer ${accessToken}`]])
+            const objectUrl = new HttpHandlerBuilder()
+                .setTypeOfRequest(TYPE_OF_REQUEST.GET)
+                .setBaseUrl('https://api.spotify.com')
+                .setPath(['v1', 'me', 'playlists'])
+                .setHeader(header)
+                .build()
+            const response = await objectUrl.axiosBuilder();
             return response.data.items;
 
         }catch(e){
@@ -68,9 +69,16 @@ export class SpotifyService {
         try{
             if(!accessToken) throw new Error('Access Token is required')
             if(!playlistId) throw new Error('Playlist Id is required')
-            const header = { Authorization: `Bearer ${accessToken}` }
+            const header = new Map([['Authorization', `Bearer ${accessToken}`]])
+            const objectUrl = new HttpHandlerBuilder()
+                .setTypeOfRequest(TYPE_OF_REQUEST.GET)
+                .setBaseUrl('https://api.spotify.com')
+                .setPath(['v1', 'playlists',playlistId,"tracks"])
+                .setQuery(new Map([['limit', '100'], ['offset', '0']]))
+                .setHeader(header)
+                .build()
 
-            const response = await axios.get(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100&offset=0`, { headers: header });
+            const response = await objectUrl.axiosBuilder();
             return response.data.items;
 
         }catch(e){
@@ -82,9 +90,16 @@ export class SpotifyService {
         try{
             if(!accessToken) throw new Error('Access Token is required')
             if(!trackId) throw new Error('Track Id is required')
-            const header = { Authorization: `Bearer ${accessToken}` }
-
-            const response = await axios.get(`https://api.spotify.com/v1/tracks/${trackId}`, { headers: header });
+            
+            const header = new Map([['Authorization', `Bearer ${accessToken}`]])
+            const objectUrl = new HttpHandlerBuilder()
+                .setTypeOfRequest(TYPE_OF_REQUEST.GET)
+                .setBaseUrl('https://api.spotify.com')
+                .setPath(['v1', 'tracks', trackId])
+                .setHeader(header)
+                .build()
+            
+            const response = await objectUrl.axiosBuilder();
             return response.data.preview_url;
 
         }catch(e){

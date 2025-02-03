@@ -52,14 +52,14 @@ class HttpHandler {
 
         const newObject: Record<string, any> = {};
 
-        for (const [key, value] of this.header.entries()) {
+        for (const [key, value] of this.header.entries()) { // Para Map
             newObject[key] = value;
         }
 
         return newObject;
     }
 
-    async axiosBuild(): Promise<AxiosResponse> {
+    async axiosBuilder(): Promise<AxiosResponse> {
         try {
             if (!this.typeOfRequest) {
                 throw new Error('Type of request is required')
