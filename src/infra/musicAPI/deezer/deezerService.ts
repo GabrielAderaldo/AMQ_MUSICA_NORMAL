@@ -1,4 +1,4 @@
-import axios, { Axios, AxiosResponse } from "axios"
+import { AxiosResponse } from "axios"
 import { HttpHandlerBuilder, TYPE_OF_REQUEST } from "../../../utils/http/httpHandler"
 
 export class DeezerService{
