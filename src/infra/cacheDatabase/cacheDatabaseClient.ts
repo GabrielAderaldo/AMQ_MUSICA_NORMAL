@@ -7,6 +7,20 @@ export class CacheDatabaseClient implements ICacheDatabaseClient {
     constructor(databaseCacheClient:ICacheDatabaseClient){
         this.databaseCacheClient = databaseCacheClient
     }
+    deleteAllRooms(): Promise<void> {
+        try{
+            return this.databaseCacheClient.deleteAllRooms()
+        }catch(e){
+            throw e
+        }
+    }
+    async getAllRoomsId(): Promise<string[]> {
+        try{
+            return await this.databaseCacheClient.getAllRoomsId()
+        }catch(e){
+            throw e
+        }
+    }
 
 
     async initializeRoomState(roomId: string, initialState: Record<string, string>): Promise<void> {

@@ -1,7 +1,6 @@
-import axios from "axios"
-import qs from 'qs'
+import axios from "axios";
+import qs from 'qs';
 require('dotenv').config();
-
 
 export class SpotifyService {
     
@@ -19,8 +18,8 @@ export class SpotifyService {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'Authorization': 'Basic ' + Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`).toString('base64'),
                 }
-            
-                const response = await axios.post('https://accounts.spotify.com/api/token',body,{ headers: header })
+                
+                const response = await axios.post('https://accounts.spotify.com/api/token', body, { headers: header });
 
                 return response.data;
 
@@ -43,7 +42,7 @@ export class SpotifyService {
                 'Authorization': 'Basic ' + Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`).toString('base64')
             }
 
-            const response = await axios.post('https://accounts.spotify.com/api/token',body,{ headers: header })
+            const response = await axios.post('https://accounts.spotify.com/api/token', body, { headers: header });
 
             return response.data;
 
@@ -57,14 +56,13 @@ export class SpotifyService {
             if(!accessToken) throw new Error('Access Token is required')
             const header = { Authorization: `Bearer ${accessToken}` }
 
-            const response = await axios.get('https://api.spotify.com/v1/me/playlists',{ headers: header })
-            return response.data.items
+            const response = await axios.get('https://api.spotify.com/v1/me/playlists', { headers: header });
+            return response.data.items;
 
         }catch(e){
             throw e
         }
     }
-
 
     async getPlaylistTrack(accessToken:string, playlistId:string){
         try{
@@ -72,14 +70,13 @@ export class SpotifyService {
             if(!playlistId) throw new Error('Playlist Id is required')
             const header = { Authorization: `Bearer ${accessToken}` }
 
-            const response = await axios.get(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100&offset=0`,{ headers: header })
-            return response.data.items
+            const response = await axios.get(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100&offset=0`, { headers: header });
+            return response.data.items;
 
         }catch(e){
             throw e
         }
     }
-
 
     async getSongPreview(accessToken:string, trackId:string){
         try{
@@ -87,12 +84,11 @@ export class SpotifyService {
             if(!trackId) throw new Error('Track Id is required')
             const header = { Authorization: `Bearer ${accessToken}` }
 
-            const response = await axios.get(`https://api.spotify.com/v1/tracks/${trackId}`,{ headers: header })
-            return response.data.preview_url
+            const response = await axios.get(`https://api.spotify.com/v1/tracks/${trackId}`, { headers: header });
+            return response.data.preview_url;
 
         }catch(e){
             throw e
         }
     }
-
 }
