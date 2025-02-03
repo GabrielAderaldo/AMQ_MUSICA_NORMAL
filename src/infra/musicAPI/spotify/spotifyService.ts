@@ -1,9 +1,10 @@
+import { AxiosResponse } from "axios";
 import { HttpHandlerBuilder, TYPE_OF_REQUEST } from "../../../utils/http/httpHandler";
 require('dotenv').config();
 
 export class SpotifyService {
     
-    async getAccessToken(code:string){
+    async getAccessToken(code:string): Promise<AxiosResponse>{
         try{
             if(!code) throw new Error('Code is required')
 
@@ -24,7 +25,7 @@ export class SpotifyService {
         }
     }
 
-    async getRefreshToken(refreshToken:string){
+    async getRefreshToken(refreshToken:string): Promise<AxiosResponse>{
         try{
             if(!refreshToken) throw new Error('Refresh Token is required')
             
@@ -47,7 +48,7 @@ export class SpotifyService {
         }
     }
 
-    async getPlaylist(accessToken:string){
+    async getPlaylist(accessToken:string): Promise<AxiosResponse>{
         try{
             if(!accessToken) throw new Error('Access Token is required')
             const header = new Map([['Authorization', `Bearer ${accessToken}`]])
@@ -65,7 +66,7 @@ export class SpotifyService {
         }
     }
 
-    async getPlaylistTrack(accessToken:string, playlistId:string){
+    async getPlaylistTrack(accessToken:string, playlistId:string): Promise<AxiosResponse>{
         try{
             if(!accessToken) throw new Error('Access Token is required')
             if(!playlistId) throw new Error('Playlist Id is required')
@@ -86,7 +87,7 @@ export class SpotifyService {
         }
     }
 
-    async getSongPreview(accessToken:string, trackId:string){
+    async getSongPreview(accessToken:string, trackId:string): Promise<AxiosResponse>{
         try{
             if(!accessToken) throw new Error('Access Token is required')
             if(!trackId) throw new Error('Track Id is required')

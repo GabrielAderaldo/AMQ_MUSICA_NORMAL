@@ -1,9 +1,9 @@
-import axios from "axios"
+import axios, { Axios, AxiosResponse } from "axios"
 import { HttpHandlerBuilder, TYPE_OF_REQUEST } from "../../../utils/http/httpHandler"
 
 export class DeezerService{
 
-    async getSongPreviewByName(trackName: string): Promise<any>{
+    async getSongPreviewByName(trackName: string): Promise<AxiosResponse>{
         try{
             if(!trackName) throw new Error('Track Id is required')
             const objectUrl = new HttpHandlerBuilder()
