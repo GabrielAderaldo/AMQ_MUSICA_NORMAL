@@ -15,7 +15,6 @@ export class SpotifyDto implements IMusicRepository{
 
     async getAllPlaylists(accessToken: string): Promise<Playlist[]> {
         try{
-            if(!accessToken) throw new Error("Access token is required")
             const playlistResponse = await this.spotifyService.getPlaylist(accessToken);
             const playlistsPartOne:Playlist[] = playlistResponse.map((playlistItem:any) => {
                 let imageUrl = ""
@@ -54,9 +53,7 @@ export class SpotifyDto implements IMusicRepository{
     }
     async getPlaylistTrack(accessToken: string, playlistId: string): Promise<Track[]> {
         try{
-            if(!accessToken) throw new Error('Access Token is required')
-            if(!playlistId) throw new Error('Playlist Id is required')
-            
+                        
             const playlistTracks = await this.spotifyService.getPlaylistTrack(accessToken, playlistId)
 
                 const tracks = playlistTracks.map((track:any) => {

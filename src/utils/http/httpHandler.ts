@@ -1,5 +1,6 @@
-import axios, { Axios, AxiosResponse } from "axios"
+import axios, { Axios, AxiosError, AxiosResponse } from "axios"
 import qs from "qs"
+import { CustomErrorBuilder } from "../error/customError"
 
 export enum TYPE_OF_REQUEST {
     GET = "GET",
@@ -62,7 +63,13 @@ class HttpHandler {
     async axiosBuilder(): Promise<AxiosResponse> {
         try {
             if (!this.typeOfRequest) {
-                throw new Error('Type of request is required')
+                const customError = new CustomErrorBuilder()
+                    .setHeaderError("MISSING_TYPE_OF_REQUEST")
+                    .setMessageError("Type of Request is required")
+                    .setStatus(400)
+                    .build()
+
+                throw customError
             }
 
             switch (this.typeOfRequest) {
@@ -93,7 +100,17 @@ class HttpHandler {
                     })
             }
         } catch (err) {
-            throw err
+            if(err instanceof AxiosError){
+                const customError = new CustomErrorBuilder()
+                .setHeaderError("FAILED_REQUEST_INTERNAL_TO_API")
+                .setMessageError(err.response?.data)
+                .setStatus(500)
+                .build()
+    
+                throw customError
+            }else{
+                throw err
+            }
         }
     }
 

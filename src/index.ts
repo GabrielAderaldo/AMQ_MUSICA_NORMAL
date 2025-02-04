@@ -5,6 +5,7 @@ const cors = require('cors');
 import 'dotenv/config';
 import { redisConnection } from './infra/cacheDatabase/redis/redisConnection';
 import { DatabaseCacheClientSingleton } from './infra/cacheDatabase/databaseCacheClientSingleton';
+import { CustomError } from './utils/error/customError';
 
 const PORT = process.env.PORT || 3000;
 
@@ -31,12 +32,18 @@ const PORT = process.env.PORT || 3000;
     const { GameController } = await import('./useCase/controllers/gameController');
 
     // Rotas corrigidas com `next(error)`
-    app.get('/callback', (req, res, next) => {
+    app.get('/callback', (req, res) => {
       const { code } = req.query;
       const spotifyService = new SpotifyService();
       spotifyService.getAccessToken(code as string)
         .then((token) => res.send(token))
-        .catch(next);
+        .catch((error) => {
+          if(error instanceof CustomError){
+            res.status(error.status || 500).json(error.toJson());
+          }else{
+            res.status(500).json({message: 'Internal server error'});
+          }
+        });
     });
 
     app.get('/refresh', (req, res, next) => {
@@ -44,7 +51,13 @@ const PORT = process.env.PORT || 3000;
       const spotifyService = new SpotifyService();
       spotifyService.getRefreshToken(refreshToken as string)
         .then((token) => res.send(token))
-        .catch(next);
+        .catch((error) => {
+          if(error instanceof CustomError){
+            res.status(error.status || 500).json(error.toJson());
+          }else{
+            res.status(500).json({message: 'Internal server error'});
+          }
+        });
     });
 
     app.get('/playlist', (req, res, next) => {
@@ -52,7 +65,13 @@ const PORT = process.env.PORT || 3000;
       const musicRepository = new MusicRepository(new SpotifyDto(), new DeezerDto());
       musicRepository.getAllPlaylists(accessToken as string)
         .then((playlists) => res.send(playlists))
-        .catch(next);
+        .catch((error) => {
+          if(error instanceof CustomError){
+            res.status(error.status || 500).json(error.toJson());
+          }else{
+            res.status(500).json({message: 'Internal server error'});
+          }
+        });
     });
 
     app.get('/playlist/:id', (req, res, next) => {
@@ -61,15 +80,27 @@ const PORT = process.env.PORT || 3000;
       const musicRepository = new MusicRepository(new SpotifyDto(), new DeezerDto());
       musicRepository.getPlaylistTrack(accessToken as string, id)
         .then((tracks) => res.send(tracks))
-        .catch(next);
+        .catch((error) => {
+          if(error instanceof CustomError){
+            res.status(error.status || 500).json(error.toJson());
+          }else{
+            res.status(500).json({message: 'Internal server error'});
+          }
+        });
     });
 
-    app.get('/track/:name/:artist', (req, res, next) => {
+    app.get('/track/:name/:artist', (req, res) => {
       const { name, artist } = req.params;
       const musicController = new MusicController();
       musicController.getSongsPreviewByName(name, artist)
         .then((tracks) => res.send(tracks))
-        .catch(next);
+        .catch((error) => {
+          if(error instanceof CustomError){
+            res.status(error.status || 500).json(error.toJson());
+          }else{
+            res.status(500).json({message: 'Internal server error'});
+          }
+        });
     });
 
     app.post('/createRoom', (req, res, next) => {
@@ -90,7 +121,13 @@ const PORT = process.env.PORT || 3000;
           };
           res.status(201).send(result);
         })
-        .catch(next);
+        .catch((error) => {
+          if(error instanceof CustomError){
+            res.status(error.status || 500).json(error.toJson());
+          }else{
+            res.status(500).json({message: 'Internal server error'});
+          }
+        });
     });
 
     app.get('/room/:id', (req, res, next) => {
@@ -98,7 +135,13 @@ const PORT = process.env.PORT || 3000;
       const gameController = new GameController();
       gameController.getRoomStatus(id)
         .then((room) => res.status(200).send(room))
-        .catch(next);
+        .catch((error) => {
+          if(error instanceof CustomError){
+            res.status(error.status || 500).json(error.toJson());
+          }else{
+            res.status(500).json({message: 'Internal server error'});
+          }
+        });
     });
 
     app.post('/startRound', (req, res, next) => {
@@ -106,21 +149,39 @@ const PORT = process.env.PORT || 3000;
       const gameController = new GameController();
       gameController.startRound(room_id)
         .then((room) => res.status(200).send(room))
-        .catch(next);
+        .catch((error) => {
+          if(error instanceof CustomError){
+            res.status(error.status || 500).json(error.toJson());
+          }else{
+            res.status(500).json({message: 'Internal server error'});
+          }
+        });
     });
 
     app.get('/getAllRoom', (req, res, next) => {
       const gameController = new GameController();
       gameController.getAllRoomsId()
         .then((rooms) => res.status(200).send(rooms))
-        .catch(next);
+        .catch((error) => {
+          if(error instanceof CustomError){
+            res.status(error.status || 500).json(error.toJson());
+          }else{
+            res.status(500).json({message: 'Internal server error'});
+          }
+        });
     });
 
     app.delete('/deleteAllRooms/', (req, res, next) => {
       const gameController = new GameController();
       gameController.deleteAllRooms()
         .then(() => res.status(200).send('All rooms deleted'))
-        .catch(next);
+        .catch((error) => {
+          if(error instanceof CustomError){
+            res.status(error.status || 500).json(error.toJson());
+          }else{
+            res.status(500).json({message: 'Internal server error'});
+          }
+        });
     });
 
     // Inicia o servidor somente depois que tudo estiver configurado

@@ -3,6 +3,7 @@ import { Track } from "../../domain/entity/track";
 import { DeezerDto } from "../../infra/musicAPI/deezer/deezerDto";
 import { MusicRepository } from "../../infra/musicAPI/musicRepository";
 import { SpotifyDto } from "../../infra/musicAPI/spotify/spotifyDto";
+import { CustomErrorBuilder } from "../../utils/error/customError";
 
 export class MusicController{
 
@@ -10,7 +11,6 @@ export class MusicController{
 
     async getPlaylists(accessToken: string){
         try{
-            if(!accessToken) throw new Error("Access token is required")
             return await this.musicRepository.getAllPlaylists(accessToken)
         }catch(e){
             throw e
@@ -19,8 +19,6 @@ export class MusicController{
 
     async getPlaylistTracks(accessToken: string, playlistId: string){
         try{
-            if(!accessToken) throw new Error('Access Token is required')
-            if(!playlistId) throw new Error('Playlist Id is required')
             return await this.musicRepository.getPlaylistTrack(accessToken, playlistId)
         }catch(e){
             throw e
@@ -32,9 +30,7 @@ export class MusicController{
         "error": string | undefined
     }>{
         try{
-            if(!trackName) throw new Error('Access Token is required')
-            if(!trackArtist) throw new Error('Track Id is required')
-
+            
             const tracks = await this.musicRepository.getSongsPreviewByName(trackName, trackArtist)
             
             if(tracks.length === 0) return {"song":undefined,"error":"SONG NOT FOUND"}
