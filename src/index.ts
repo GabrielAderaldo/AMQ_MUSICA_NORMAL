@@ -46,7 +46,7 @@ const PORT = process.env.PORT || 3000;
         });
     });
 
-    app.get('/refresh', (req, res, next) => {
+    app.get('/refresh', (req, res) => {
       const { refreshToken } = req.query;
       const spotifyService = new SpotifyService();
       spotifyService.getRefreshToken(refreshToken as string)
@@ -60,7 +60,7 @@ const PORT = process.env.PORT || 3000;
         });
     });
 
-    app.get('/playlist', (req, res, next) => {
+    app.get('/playlist', (req, res) => {
       const { accessToken } = req.query;
       const musicRepository = new MusicRepository(new SpotifyDto(), new DeezerDto());
       musicRepository.getAllPlaylists(accessToken as string)
@@ -74,7 +74,7 @@ const PORT = process.env.PORT || 3000;
         });
     });
 
-    app.get('/playlist/:id', (req, res, next) => {
+    app.get('/playlist/:id', (req, res) => {
       const { accessToken } = req.query;
       const { id } = req.params;
       const musicRepository = new MusicRepository(new SpotifyDto(), new DeezerDto());
@@ -103,7 +103,7 @@ const PORT = process.env.PORT || 3000;
         });
     });
 
-    app.post('/createRoom', (req, res, next) => {
+    app.post('/createRoom', (req, res) => {
       const { playlists_id, owner_id, players, round, max_round, accessToken } = req.body;
       const gameController = new GameController();
       gameController.createRoom(playlists_id, owner_id, players, round, max_round, accessToken)
@@ -130,11 +130,13 @@ const PORT = process.env.PORT || 3000;
         });
     });
 
-    app.get('/room/:id', (req, res, next) => {
+    app.get('/room/:id', (req, res) => {
       const { id } = req.params;
       const gameController = new GameController();
       gameController.getRoomStatus(id)
-        .then((room) => res.status(200).send(room))
+        .then((room) => {
+          res.status(204).json(room);
+        })
         .catch((error) => {
           if(error instanceof CustomError){
             res.status(error.status || 500).json(error.toJson());
@@ -144,7 +146,7 @@ const PORT = process.env.PORT || 3000;
         });
     });
 
-    app.post('/startRound', (req, res, next) => {
+    app.post('/startRound', (req, res) => {
       const { room_id } = req.body;
       const gameController = new GameController();
       gameController.startRound(room_id)
@@ -153,12 +155,13 @@ const PORT = process.env.PORT || 3000;
           if(error instanceof CustomError){
             res.status(error.status || 500).json(error.toJson());
           }else{
+            console.log(error);
             res.status(500).json({message: 'Internal server error'});
           }
         });
     });
 
-    app.get('/getAllRoom', (req, res, next) => {
+    app.get('/getAllRoom', (req, res) => {
       const gameController = new GameController();
       gameController.getAllRoomsId()
         .then((rooms) => res.status(200).send(rooms))
@@ -171,7 +174,7 @@ const PORT = process.env.PORT || 3000;
         });
     });
 
-    app.delete('/deleteAllRooms/', (req, res, next) => {
+    app.delete('/deleteAllRooms/', (req, res) => {
       const gameController = new GameController();
       gameController.deleteAllRooms()
         .then(() => res.status(200).send('All rooms deleted'))

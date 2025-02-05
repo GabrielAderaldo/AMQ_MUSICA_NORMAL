@@ -9,6 +9,7 @@ import { DeezerDto } from "../../infra/musicAPI/deezer/deezerDto";
 import { IMusicRepository } from "../../infra/musicAPI/IMusicRepository";
 import { MusicRepository } from "../../infra/musicAPI/musicRepository";
 import { SpotifyDto } from "../../infra/musicAPI/spotify/spotifyDto";
+import { isObjectEmpty } from "../../utils/objectsUtils";
 import { MusicController } from "./musicController";
 
 export class GameController {
@@ -38,8 +39,17 @@ export class GameController {
     async getRoomStatus(room_id:string): Promise<any> {
         try {
             const room = await this.cacheDatabaseRepository.getRoomState(room_id);
-            console.log(room.actual_music_playing)
-            return room;
+            
+            if(isObjectEmpty(room) == true){
+                return {status:204,message:"Room not found",result:null};
+            }
+            
+            if(room == undefined || room == null){
+                return {status:204,message:"Room not found",result:null};
+            }
+            
+            return {status:200,message:"Room found",result:room};
+        
         } catch (e) {
             throw e;
         }
@@ -94,84 +104,90 @@ export class GameController {
 
     async createRoom(playlists_id:string[],owner_id:string,players:[{user_id:string,score:number}],round:number,max_round:number,accessToken:string): Promise<{"room_info":Room,"songs":Songs[]}> {
         try {
-            const music_pool:{track:Track,whoIsTheTrack:string}[] = [];
-            const songs:Songs[] = [];
-            const playlists = playlists_id.map(async (playlist_id:string)=>{
-                const track = await this.musicRepository.getPlaylistTrack(accessToken,playlist_id)
-                return {track:track,playlist_id:playlist_id};
+
+            const playlists = await Promise.all(
+                playlists_id.map(async (playlist_id) => {
+                    const track = await this.musicRepository.getPlaylistTrack(accessToken, playlist_id);
+                    return { track, playlist_id };
+                })
+            );
+    
+            const music_pool = playlists.flatMap(({ track, playlist_id }) => {
+                const numberOfMusic = Math.round(max_round / playlists_id.length) + 3;
+                return _shuffleArray(track.slice(0, numberOfMusic)).map((t) => ({
+                    track: t,
+                    whoIsTheTrack: playlist_id,
+                }));
             });
-
-            for(const playlist of playlists){
-                const numberOfMusic = Math.round(max_round/playlists_id.length) + 3;
-                const personTrack = ((await playlist).track).slice(0,numberOfMusic);
-                const personTrackShuffle = personTrack.sort(() => Math.random() - 0.5);
-                for( let x of personTrackShuffle){
-                    music_pool.push({track:x,whoIsTheTrack:(await playlist).playlist_id});
-                }
-            }
-
-            for(const track of music_pool){
-                const objectSong = await this.musicController.getSongsPreviewByName(track.track.name,track.track.artist);
-                if(!objectSong.song) {
-                    const song = new Songs(track.track.id,track.track.name,track.track.artist,track.track.album,track.track.imageUrl,track.track.duration,"SONG NOT FOUND",track.whoIsTheTrack);
-                    songs.push(song);
-                }else{
-                    const song = new Songs(track.track.id,track.track.name,track.track.artist,track.track.album,track.track.imageUrl,track.track.duration,objectSong.song.preview,track.whoIsTheTrack);
-                    songs.push(song);
-                }
-            }
-        
-            const p:Players[] = [];
-            
-            players.forEach((player) => {
-                p.push({user_id:`${player}`,score:0});
-            })
-
-            const actual_music_playing = songs.sort(() => Math.random() - 0.5)[0];
-
-            const room = new Room(playlists_id,owner_id,p,round,max_round)
-            
+    
+            const songs: Songs[] = await Promise.all(
+                music_pool.map(async ({ track, whoIsTheTrack }) => {
+                    try {
+                        const objectSong = await this.musicController.getSongsPreviewByName(track.name, track.artist);
+                        return new Songs(
+                            track.id,
+                            track.name,
+                            track.artist,
+                            track.album,
+                            track.imageUrl,
+                            track.duration,
+                            objectSong?.song?.preview || "SONG NOT FOUND",
+                            whoIsTheTrack
+                        );
+                    } catch {
+                        return new Songs(
+                            track.id,
+                            track.name,
+                            track.artist,
+                            track.album,
+                            track.imageUrl,
+                            track.duration,
+                            "SONG NOT FOUND",
+                            whoIsTheTrack
+                        );
+                    }
+                })
+            );
+    
+            const players_info = players.map((player) => ({
+                user_id: player.user_id,
+                score: player.score,
+                room_status_player: "CONNECTED",
+                room_ready_status_player: "NOT_READY",
+                socket_id: "",
+            }));
+    
+            const actual_music_playing = _shuffleArray([...songs])[0];
+            const room = new Room(playlists_id, owner_id, players_info, round, max_round);
+    
             const room_info = {
-                "room_id":room.private_id,
-                "room_state":room.status,
-                "actual_music_playing":actual_music_playing,
-                "time_stamp":new Date().getTime(),
-            }
-
-            const players_info = p.map((player)=>{
-                return {
-                    "user_id":player.user_id,
-                    "score":player.score,
-                    "room_status_player":"CONNECTED",
-                    "room_ready_status_player":"NOT_READY",
-                    "socket_id":""
-                }
-            })
-
-            const pool_music_cache = songs
-
-            const name_of_music = actual_music_playing.name
-
-            const createRoom = await this.databaseRepository.createRoom(room) as any;
-            
-            await this.cacheDatabaseRepository.initializeRoomState(createRoom._id,{
-                "room_info":JSON.stringify(room_info),
-                "players_info":JSON.stringify(players_info),
-                "pool_music":JSON.stringify(pool_music_cache),
-                "name_of_music":name_of_music,
-                "round":round.toString(),
-                "max_round":max_round.toString(),
-                "actual_music_playing":JSON.stringify(actual_music_playing),
-                "time_stamp":new Date().getTime().toString(),
-            })
-
-            
-
-            return {"room_info":createRoom,"songs":songs};
-            
-        } catch (e) {
-            throw e;
+                room_id: room.private_id,
+                room_state: room.status,
+                actual_music_playing,
+                time_stamp: Date.now(),
+            };
+    
+            const createRoom = (await this.databaseRepository.createRoom(room)) as Room;
+            await this.cacheDatabaseRepository.initializeRoomState(createRoom.private_id, {
+                room_info: JSON.stringify(room_info),
+                players_info: JSON.stringify(players_info),
+                pool_music: JSON.stringify(songs),
+                name_of_music: actual_music_playing.name,
+                round: round.toString(),
+                max_round: max_round.toString(),
+                actual_music_playing: JSON.stringify(actual_music_playing),
+                time_stamp: Date.now().toString(),
+            });
+    
+            return { room_info: createRoom, songs };
+    
+        } catch(e) {
+            throw e
         }
     }
 
+}
+
+function _shuffleArray<T>(array: T[]): T[] {
+    return array.sort(() => Math.random() - 0.5);
 }

@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx tsc",
     "dev": "npx nodemon",
-    "debug": "node --inspect -r ts-node/register src/server.ts"
+    "debug": "node --inspect -r ts-node/register src/server.ts",
+    "start": "node ./build/index.js"
   },
   "keywords": [],
   "author": "",
